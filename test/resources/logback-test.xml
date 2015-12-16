@@ -1,0 +1,17 @@
+<configuration debug="true">
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%level - %logger - %message%n%xException</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="model" level="DEBUG" />
+    <logger name="play" level="INFO" />
+    <logger name="application" level="INFO" />
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT" />
+    </root>
+
+</configuration>
