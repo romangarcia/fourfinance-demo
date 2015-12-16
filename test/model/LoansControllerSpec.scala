@@ -75,6 +75,24 @@ class LoansControllerSpec extends FlatSpec with Matchers with DefaultAwaitTimeou
       assert( status(response) === INTERNAL_SERVER_ERROR )
       val js = contentAsJson(response)
 
+      assert( (js \ "success").as[Boolean] === false )
+      assert( (js \ "error").asOpt[JsValue].nonEmpty )
+    }
+
+  }
+
+  it should "fail with 400-BadRequest on NON-JSON request" in {
+
+    // expect low risk (early hour, but non-maximum amount)
+    val calendar = FakeCalendar(timestampAtHour(2))
+
+    withLoanController(calendar) { ctrlr =>
+      val request = FakeRequest().withTextBody("This is not a JSON...")
+      val response = ctrlr.requestLoan.apply(request)
+
+      assert( status(response) === BAD_REQUEST )
+      val js = contentAsJson(response)
+
       println(js)
       assert( (js \ "success").as[Boolean] === false )
       assert( (js \ "error").asOpt[JsValue].nonEmpty )
