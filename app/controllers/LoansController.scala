@@ -17,7 +17,7 @@ class LoansController(loans: Loans, calendar: Calendar) extends Controller {
           val loanReq = newRequest(loanReqMsg)
           Logger.info(s"Requesting approval on Loan Request [$loanReq]")
           val approvedReq = loans.approve(loanReq)
-          Ok(Json.obj("success" -> false, "loan_id" -> approvedReq.id))
+          Ok(Json.obj("success" -> true, "loan_id" -> approvedReq.id))
         }.recover {
           case e: LoanRejectedException =>
             Ok(Json.obj("success" -> false, "error" -> "rejection", "reason" -> e.getMessage))

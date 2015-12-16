@@ -1,9 +1,11 @@
 package model
 
+import java.util.UUID
+
 import controllers.LoansController
 import org.joda.time.DateTime
 import org.scalatest.{FlatSpec, Matchers}
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json}
 import play.api.test.{DefaultAwaitTimeout, FakeRequest, Helpers}
 
 class LoansControllerSpec extends FlatSpec with Matchers with DefaultAwaitTimeout {
@@ -13,23 +15,69 @@ class LoansControllerSpec extends FlatSpec with Matchers with DefaultAwaitTimeou
 
   "Loans Controller" should "reject loan with 200-OK response" in {
 
-    // force high risk with risky hour with a huge amount
+    // high risk with risky hour with a huge amount
     val calendar = FakeCalendar(timestampAtHour(4))
-    val jsonReq = Json.parse(
-      """
-        |{
-        |    "first_name" : "Roman",
-        |    "last_name" : "Garcia",
-        |    "amount" : 5000.99,
-        |    "term" : "5 days"
-        |}
-      """.stripMargin)
+    val jsonReq = jsonLoanRequest(amount = 5000.99)
 
     withLoanController(calendar) { ctrlr =>
       val request = FakeRequest().withJsonBody(jsonReq)
       val response = ctrlr.requestLoan.apply(request)
 
       assert( status(response) === OK )
+      val js = contentAsJson(response)
+
+      assert( (js \ "success").as[Boolean] === false )
+      assert( (js \ "error").as[String] === "rejection" )
+      assert( (js \ "reason").as[String].nonEmpty )
+    }
+
+  }
+
+  it should "approve loan with 200-OK response" in {
+
+    // expect low risk (early hour, but non-maximum amount)
+    val calendar = FakeCalendar(timestampAtHour(2))
+    val jsonReq = jsonLoanRequest(amount = 4999.99)
+
+    withLoanController(calendar) { ctrlr =>
+      val request = FakeRequest().withJsonBody(jsonReq)
+      val response = ctrlr.requestLoan.apply(request)
+
+      assert( status(response) === OK )
+      val js = contentAsJson(response)
+
+      assert( (js \ "success").as[Boolean] === true )
+      assert( (js \ "error").asOpt[String].isEmpty )
+      assert( (js \ "loan_id").asOpt[UUID].nonEmpty )
+    }
+
+  }
+
+  it should "fail with 500-ISE when json request is invalid" in {
+
+    // expect low risk (early hour, but non-maximum amount)
+    val calendar = FakeCalendar(timestampAtHour(2))
+
+    // invalid json, no amount...
+    val jsonReq = Json.parse(
+      s"""
+         |{
+         |    "first_name" : "Roman",
+         |    "last_name" : "Garcia",
+         |    "term" : "5 days"
+         |}
+      """.stripMargin)
+
+    withLoanController(calendar) { ctrlr =>
+      val request = FakeRequest().withJsonBody(jsonReq)
+      val response = ctrlr.requestLoan.apply(request)
+
+      assert( status(response) === INTERNAL_SERVER_ERROR )
+      val js = contentAsJson(response)
+
+      println(js)
+      assert( (js \ "success").as[Boolean] === false )
+      assert( (js \ "error").asOpt[JsValue].nonEmpty )
     }
 
   }
@@ -45,6 +93,18 @@ class LoansControllerSpec extends FlatSpec with Matchers with DefaultAwaitTimeou
       t(ctrlr)
     }
 
+  }
+
+  def jsonLoanRequest(amount: BigDecimal): JsValue = {
+    Json.parse(
+      s"""
+        |{
+        |    "first_name" : "Roman",
+        |    "last_name" : "Garcia",
+        |    "amount" : $amount,
+        |    "term" : "5 days"
+        |}
+      """.stripMargin)
   }
 }
 
