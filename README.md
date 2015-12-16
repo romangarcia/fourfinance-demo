@@ -1,9 +1,12 @@
 # 4Finance Homework
 
 This project implements the Technical Assesment for 4Finance.
+
 It was designed and implemented for the JVM Platform using the Scala language.
+
 I took the liberty to avoid both requested libraries, Spring and Hibernate, with the intention to keep a
 simple implementation for a really simple requirement.
+
 I used Play Framework 2.4 as MVC (REST only in this case), MacWire for Compilation-Time DI, Anorm as SQL / JDBC abstraction
 and ScalaTest for unit testing.
 
