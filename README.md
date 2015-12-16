@@ -15,5 +15,7 @@ curl -X POST 'http://localhost:9000/loans' -HContent-Type:application/json -d'{ 
 
 NOTE: From the fourth request on from the same client you should see a "rejection" error
 
+NOTE (2): The "term" property accepts "natural" duration syntax. i.e.: "5 seconds", "2 months", "15 years", etc.
+
 ## Run Tests
   > sbt test
